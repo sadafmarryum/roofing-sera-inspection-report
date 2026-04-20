@@ -52,15 +52,60 @@ async function runSeraTask(data: {
     sessionUrl = `https://browserbase.com/sessions/${stagehand.browserbaseSessionID}`;
 
     // =========================
-    // STEP 1 - LOGIN
+    // STEP 1 - LOGIN (FIXED)
     // =========================
+    console.log("\n[1] Login started");
+
     await page.goto("https://misterroofrepair.sera.tech/admins/login");
+    await page.waitForTimeout(3000);
 
-    await page.locator('input[type="email"]').fill(process.env.SERA_EMAIL || "");
-    await page.locator('input[type="password"]').fill(process.env.SERA_PASSWORD || "");
+    const email = process.env.SERA_EMAIL || "";
+    const password = process.env.SERA_PASSWORD || "";
 
-    await page.locator('button[type="submit"]').click();
-    await page.waitForTimeout(5000);
+    const currentUrl = await page.url();
+
+    if (currentUrl.includes("/login")) {
+      console.log("    → Filling credentials");
+
+      // FIXED SELECTORS (no crash)
+      const emailInput = await page.locator("input").first();
+      const passwordInput = await page.locator('input[type="password"]').first();
+
+      await emailInput.fill(email);
+      await passwordInput.fill(password);
+
+      await page.waitForTimeout(500);
+
+      // click login safely
+      const clicked = await page.evaluate(() => {
+        const btn = Array.from(
+          document.querySelectorAll("button, input[type='submit']")
+        ).find(el =>
+          el.textContent?.toLowerCase().includes("login") ||
+          el.textContent?.toLowerCase().includes("sign in")
+        ) as HTMLElement | null;
+
+        if (btn) {
+          btn.click();
+          return true;
+        }
+        return false;
+      });
+
+      if (!clicked) {
+        await page.locator("button, input[type='submit']").first().click();
+      }
+
+      // wait redirect
+      for (let i = 0; i < 30; i++) {
+        await page.waitForTimeout(1000);
+        const url = await page.url();
+        if (!url.includes("/login")) break;
+        if (i === 29) throw new Error("Login failed");
+      }
+
+      console.log("    ✅ Login success");
+    }
 
     // =========================
     // STEP 2 - SEARCH CUSTOMER
@@ -80,15 +125,17 @@ async function runSeraTask(data: {
       return {
         success: false,
         message: `No customer found in Sera for ${data.customerName}`,
+        customerName: data.customerName,
+        sessionUrl,
       };
     }
 
     // =========================
     // STEP 3 - CLICK CUSTOMER
     // =========================
-    const clicked = await page.evaluate((name) => {
+    const clickedCustomer = await page.evaluate((name) => {
       const el = Array.from(document.querySelectorAll("a"))
-        .find((e) => e.textContent?.includes(name)) as HTMLElement | null;
+        .find(e => e.textContent?.includes(name)) as HTMLElement | null;
 
       if (el) {
         el.click();
@@ -97,16 +144,14 @@ async function runSeraTask(data: {
       return false;
     }, data.customerName);
 
-    if (!clicked) throw new Error("Customer click failed");
+    if (!clickedCustomer) throw new Error("Customer click failed");
 
     await page.waitForTimeout(5000);
 
     // =========================
     // STEP 4 - NOTES
     // =========================
-    const notesUrl = page.url() + "?tab=c_Notes";
-    await page.goto(notesUrl);
-
+    await page.goto(page.url() + "?tab=c_Notes");
     await page.waitForTimeout(5000);
 
     // =========================
@@ -114,9 +159,9 @@ async function runSeraTask(data: {
     // =========================
     await page.evaluate(() => {
       const btn = Array.from(document.querySelectorAll("button"))
-        .find((e) => e.textContent?.includes("Add Note")) as HTMLElement;
+        .find(e => e.textContent?.includes("Add Note")) as HTMLElement;
 
-      if (btn) btn.click();
+      btn?.click();
     });
 
     await page.waitForTimeout(3000);
@@ -136,9 +181,9 @@ async function runSeraTask(data: {
     // =========================
     await page.evaluate(() => {
       const save = Array.from(document.querySelectorAll("button"))
-        .find((e) => e.textContent?.includes("Save")) as HTMLElement;
+        .find(e => e.textContent?.includes("Save")) as HTMLElement;
 
-      if (save) save.click();
+      save?.click();
     });
 
     await page.waitForTimeout(5000);
@@ -147,7 +192,7 @@ async function runSeraTask(data: {
 
     return {
       success: true,
-      message: "Inspection report added to Sera successfully",
+      message: "Inspection report added successfully",
       customerName: data.customerName,
       jobNimbusUrl: data.jobNimbusUrl || null,
       companyCamUrl: data.companyCamUrl || null,
@@ -181,23 +226,26 @@ app.post("/run-sera-inspection", (req, res) => {
   runSeraTask(req.body)
     .then((result) => {
       const job = jobs.get(jobId);
-      if (job) {
-        job.status = result.success ? "done" : "failed";
-        job.result = result;
-      }
+      if (!job) return;
+
+      jobs.set(jobId, {
+        ...job,
+        status: result.success ? "done" : "failed",
+        result,
+      });
     })
     .catch((err) => {
       const job = jobs.get(jobId);
-      if (job) {
-        job.status = "failed";
-        job.error = err.message;
-      }
+      if (!job) return;
+
+      jobs.set(jobId, {
+        ...job,
+        status: "failed",
+        error: err.message,
+      });
     });
 
-  res.json({
-    jobId,
-    status: "running",
-  });
+  res.json({ jobId, status: "running" });
 });
 
 // =============================================================================
@@ -206,15 +254,10 @@ app.post("/run-sera-inspection", (req, res) => {
 app.get("/job-status/:jobId", (req, res) => {
   const job = jobs.get(req.params.jobId);
 
-  if (!job) {
-    return res.status(404).json({ error: "Job not found" });
-  }
+  if (!job) return res.status(404).json({ error: "Job not found" });
 
   if (job.status === "running") {
-    return res.json({
-      jobId: job.id,
-      status: "running",
-    });
+    return res.json({ jobId: job.id, status: "running" });
   }
 
   const response = {
@@ -232,10 +275,7 @@ app.get("/job-status/:jobId", (req, res) => {
 // HEALTH
 // =============================================================================
 app.get("/health", (_req, res) => {
-  res.json({
-    status: "ok",
-    service: "sera-inspection-server",
-  });
+  res.json({ status: "ok", service: "sera-inspection-server" });
 });
 
 // =============================================================================
@@ -245,7 +285,4 @@ const PORT = process.env.PORT || 3002;
 
 app.listen(PORT, () => {
   console.log(`🚀 Sera server running on port ${PORT}`);
-  console.log(`POST /run-sera-inspection`);
-  console.log(`GET  /job-status/:jobId`);
-  console.log(`GET  /health`);
 });
