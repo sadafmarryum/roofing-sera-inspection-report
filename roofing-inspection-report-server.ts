@@ -29,6 +29,23 @@ app.use(express.json());
 // =============================================================================
 // CORE AUTOMATION
 // =============================================================================
+async function clickAddNote(page: any): Promise<void> {
+  const coords = await page.evaluate(() => {
+    const spans = document.querySelectorAll("span.sera-button__text");
+    for (const span of spans) {
+      const text = (span.textContent || "").toLowerCase().replace(/\s+/g, " ");
+      if (text.includes("add note")) {
+        const rect = span.getBoundingClientRect();
+        return { x: Math.round(rect.left + rect.width / 2), y: Math.round(rect.top + rect.height / 2), found: true };
+      }
+    }
+    return { x: 0, y: 0, found: false };
+  });
+  if (!coords.found) throw new Error("Add Note button not found");
+  await page.sendCDP("Input.dispatchMouseEvent", { type: "mousePressed", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
+  await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseReleased", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
+}
+
 async function runSeraTask(data: {
   customerName: string;
   formattedReport: string;
@@ -169,27 +186,30 @@ async function runSeraTask(data: {
     // =========================
     // STEP 5 - ADD NOTE
    // =========================
-const addNoteCoords = await page.evaluate(() => {
-  const btn = Array.from(document.querySelectorAll("button"))
-    // .find(e => e.textContent?.includes("Add Note")) as HTMLElement | null;
-     .find(e => e.querySelector(".sera-button__text")?.textContent?.includes("Add Note")) as HTMLElement | null;
-  if (!btn) return { x: 0, y: 0, found: false };
-  btn.scrollIntoView({ block: "center" });
-  const r = btn.getBoundingClientRect();
-  return {
-    x: Math.round(r.left + r.width / 2),
-    y: Math.round(r.top + r.height / 2),
-    found: r.width > 0
-  };
-});
+// const addNoteCoords = await page.evaluate(() => {
+//   const btn = Array.from(document.querySelectorAll("button"))
+//     // .find(e => e.textContent?.includes("Add Note")) as HTMLElement | null;
+//      .find(e => e.querySelector(".sera-button__text")?.textContent?.includes("Add Note")) as HTMLElement | null;
+//   if (!btn) return { x: 0, y: 0, found: false };
+//   btn.scrollIntoView({ block: "center" });
+//   const r = btn.getBoundingClientRect();
+//   return {
+//     x: Math.round(r.left + r.width / 2),
+//     y: Math.round(r.top + r.height / 2),
+//     found: r.width > 0
+//   };
+// });
 
-if (!addNoteCoords.found) throw new Error("Add Note button not found");
+// if (!addNoteCoords.found) throw new Error("Add Note button not found");
 
-await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseMoved", x: addNoteCoords.x, y: addNoteCoords.y, button: "none" });
-await page.sendCDP("Input.dispatchMouseEvent", { type: "mousePressed", x: addNoteCoords.x, y: addNoteCoords.y, button: "left", clickCount: 1, modifiers: 0 });
-await page.waitForTimeout(80);
-await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseReleased", x: addNoteCoords.x, y: addNoteCoords.y, button: "left", clickCount: 1, modifiers: 0 });
+// await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseMoved", x: addNoteCoords.x, y: addNoteCoords.y, button: "none" });
+// await page.sendCDP("Input.dispatchMouseEvent", { type: "mousePressed", x: addNoteCoords.x, y: addNoteCoords.y, button: "left", clickCount: 1, modifiers: 0 });
+// await page.waitForTimeout(80);
+// await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseReleased", x: addNoteCoords.x, y: addNoteCoords.y, button: "left", clickCount: 1, modifiers: 0 });
 
+// await page.waitForTimeout(3000);
+
+    await clickAddNote(page);
 await page.waitForTimeout(3000);
 
     // =========================
