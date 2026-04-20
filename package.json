@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/roofing-inspection-report-server.ts"
+    "start": "node dist/roofing-inspection-report-server.js"
   },
   "dependencies": {
     "@browserbasehq/stagehand": "latest",
