@@ -76,7 +76,7 @@ app.use(express.json());
 // }
 
 async function clickAddNote(page: any): Promise<void> {
-  await page.locator("button:has-text('Add Note')").first().click();
+  await page.locator("button", { hasText: "Add Note" }).first().click();
 }
 
 async function runSeraTask(data: {
