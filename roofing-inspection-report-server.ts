@@ -171,7 +171,8 @@ async function runSeraTask(data: {
    // =========================
 const addNoteCoords = await page.evaluate(() => {
   const btn = Array.from(document.querySelectorAll("button"))
-    .find(e => e.textContent?.includes("Add Note")) as HTMLElement | null;
+    // .find(e => e.textContent?.includes("Add Note")) as HTMLElement | null;
+     .find(e => e.querySelector(".sera-button__text")?.textContent?.includes("Add Note")) as HTMLElement | null;
   if (!btn) return { x: 0, y: 0, found: false };
   btn.scrollIntoView({ block: "center" });
   const r = btn.getBoundingClientRect();
