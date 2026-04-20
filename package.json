@@ -1,11 +1,11 @@
 {
-  "name": "qbo-batch-server",
+  "name": "roofing-inspection-report",
   "version": "1.0.0",
-  "description": "Browserbase + Stagehand server for QBO invoice batching",
+  "description": "Browserbase + Stagehand server for Roofing Inspection Report",
   "type": "module",
   "scripts": {
     "build": "tsc",
-    "start": "node dist/qbo-batch-server.js"
+    "start": "node dist/roofing-inspection-report-server.ts"
   },
   "dependencies": {
     "@browserbasehq/stagehand": "latest",
