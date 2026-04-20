@@ -94,7 +94,8 @@ async function runSeraTask(data: {
   });
 
   await stagehand.init();
-  const page = stagehand.context.pages()[0];
+  // const page = stagehand.context.pages()[0];
+  const page = stagehand.page;
 
   let sessionUrl = "";
 
