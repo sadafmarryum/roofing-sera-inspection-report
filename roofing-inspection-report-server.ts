@@ -154,17 +154,42 @@ async function runSeraTask(data: {
     await page.goto(page.url() + "?tab=c_Notes");
     await page.waitForTimeout(5000);
 
+    // // =========================
+    // // STEP 5 - ADD NOTE
+    // // =========================
+    // await page.evaluate(() => {
+    //   const btn = Array.from(document.querySelectorAll("button"))
+    //     .find(e => e.textContent?.includes("Add Note")) as HTMLElement;
+
+    //   btn?.click();
+    // });
+
+    // await page.waitForTimeout(3000);
+
     // =========================
     // STEP 5 - ADD NOTE
-    // =========================
-    await page.evaluate(() => {
-      const btn = Array.from(document.querySelectorAll("button"))
-        .find(e => e.textContent?.includes("Add Note")) as HTMLElement;
+   // =========================
+const addNoteCoords = await page.evaluate(() => {
+  const btn = Array.from(document.querySelectorAll("button"))
+    .find(e => e.textContent?.includes("Add Note")) as HTMLElement | null;
+  if (!btn) return { x: 0, y: 0, found: false };
+  btn.scrollIntoView({ block: "center" });
+  const r = btn.getBoundingClientRect();
+  return {
+    x: Math.round(r.left + r.width / 2),
+    y: Math.round(r.top + r.height / 2),
+    found: r.width > 0
+  };
+});
 
-      btn?.click();
-    });
+if (!addNoteCoords.found) throw new Error("Add Note button not found");
 
-    await page.waitForTimeout(3000);
+await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseMoved", x: addNoteCoords.x, y: addNoteCoords.y, button: "none" });
+await page.sendCDP("Input.dispatchMouseEvent", { type: "mousePressed", x: addNoteCoords.x, y: addNoteCoords.y, button: "left", clickCount: 1, modifiers: 0 });
+await page.waitForTimeout(80);
+await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseReleased", x: addNoteCoords.x, y: addNoteCoords.y, button: "left", clickCount: 1, modifiers: 0 });
+
+await page.waitForTimeout(3000);
 
     // =========================
     // STEP 6 - FILL NOTE
