@@ -2,7 +2,7 @@ import { Stagehand } from "@browserbasehq/stagehand";
 import express from "express";
 
 // =============================================================================
-// JOB STORE (same pattern as QBO)
+// JOB STORE
 // =============================================================================
 type JobStatus = "running" | "done" | "failed";
 
@@ -27,7 +27,7 @@ const app = express();
 app.use(express.json());
 
 // =============================================================================
-// CORE BROWSER AUTOMATION
+// CORE AUTOMATION
 // =============================================================================
 async function runSeraTask(data: {
   customerName: string;
@@ -97,14 +97,12 @@ async function runSeraTask(data: {
       return false;
     }, data.customerName);
 
-    if (!clicked) {
-      throw new Error("Customer click failed");
-    }
+    if (!clicked) throw new Error("Customer click failed");
 
     await page.waitForTimeout(5000);
 
     // =========================
-    // STEP 4 - OPEN NOTES TAB
+    // STEP 4 - NOTES
     // =========================
     const notesUrl = page.url() + "?tab=c_Notes";
     await page.goto(notesUrl);
@@ -112,12 +110,11 @@ async function runSeraTask(data: {
     await page.waitForTimeout(5000);
 
     // =========================
-    // STEP 5 - CLICK ADD NOTE
+    // STEP 5 - ADD NOTE
     // =========================
     await page.evaluate(() => {
-      const btn = Array.from(document.querySelectorAll("button")).find((e) =>
-        e.textContent?.includes("Add Note")
-      ) as HTMLElement;
+      const btn = Array.from(document.querySelectorAll("button"))
+        .find((e) => e.textContent?.includes("Add Note")) as HTMLElement;
 
       if (btn) btn.click();
     });
@@ -125,7 +122,7 @@ async function runSeraTask(data: {
     await page.waitForTimeout(3000);
 
     // =========================
-    // STEP 6 - PASTE REPORT
+    // STEP 6 - FILL NOTE
     // =========================
     await page.evaluate((note) => {
       const textarea = document.querySelector("textarea") as HTMLTextAreaElement;
@@ -135,12 +132,11 @@ async function runSeraTask(data: {
     await page.waitForTimeout(1000);
 
     // =========================
-    // STEP 7 - SAVE NOTE
+    // STEP 7 - SAVE
     // =========================
     await page.evaluate(() => {
-      const save = Array.from(document.querySelectorAll("button")).find((e) =>
-        e.textContent?.includes("Save")
-      ) as HTMLElement;
+      const save = Array.from(document.querySelectorAll("button"))
+        .find((e) => e.textContent?.includes("Save")) as HTMLElement;
 
       if (save) save.click();
     });
@@ -152,13 +148,12 @@ async function runSeraTask(data: {
     return {
       success: true,
       message: "Inspection report added to Sera successfully",
-
       customerName: data.customerName,
       jobNimbusUrl: data.jobNimbusUrl || null,
       companyCamUrl: data.companyCamUrl || null,
-
       sessionUrl,
     };
+
   } catch (err: any) {
     await stagehand.close();
 
@@ -172,7 +167,7 @@ async function runSeraTask(data: {
 }
 
 // =============================================================================
-// POST → START JOB
+// START JOB
 // =============================================================================
 app.post("/run-sera-inspection", (req, res) => {
   const jobId = makeJobId();
@@ -185,18 +180,18 @@ app.post("/run-sera-inspection", (req, res) => {
 
   runSeraTask(req.body)
     .then((result) => {
-      jobs.set(jobId, {
-        id: jobId,
-        status: result.success ? "done" : "failed",
-        result,
-      });
+      const job = jobs.get(jobId);
+      if (job) {
+        job.status = result.success ? "done" : "failed";
+        job.result = result;
+      }
     })
     .catch((err) => {
-      jobs.set(jobId, {
-        id: jobId,
-        status: "failed",
-        error: err.message,
-      });
+      const job = jobs.get(jobId);
+      if (job) {
+        job.status = "failed";
+        job.error = err.message;
+      }
     });
 
   res.json({
@@ -206,7 +201,7 @@ app.post("/run-sera-inspection", (req, res) => {
 });
 
 // =============================================================================
-// GET → POLLING ENDPOINT
+// POLLING
 // =============================================================================
 app.get("/job-status/:jobId", (req, res) => {
   const job = jobs.get(req.params.jobId);
@@ -234,7 +229,7 @@ app.get("/job-status/:jobId", (req, res) => {
 });
 
 // =============================================================================
-// HEALTH CHECK
+// HEALTH
 // =============================================================================
 app.get("/health", (_req, res) => {
   res.json({
@@ -244,12 +239,12 @@ app.get("/health", (_req, res) => {
 });
 
 // =============================================================================
-// START SERVER
+// START
 // =============================================================================
 const PORT = process.env.PORT || 3002;
 
 app.listen(PORT, () => {
-  console.log(`🚀 Sera automation server running on port ${PORT}`);
+  console.log(`🚀 Sera server running on port ${PORT}`);
   console.log(`POST /run-sera-inspection`);
   console.log(`GET  /job-status/:jobId`);
   console.log(`GET  /health`);
