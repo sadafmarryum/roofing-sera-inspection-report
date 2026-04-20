@@ -29,50 +29,54 @@ app.use(express.json());
 // =============================================================================
 // CORE AUTOMATION
 // =============================================================================
+// async function clickAddNote(page: any): Promise<void> {
+//   // First: debug what spans exist
+//   const debug = await page.evaluate(() => {
+//     return Array.from(document.querySelectorAll("span")).map(s => ({
+//       text: (s.textContent || "").trim(),
+//       className: s.className,
+//       width: s.getBoundingClientRect().width,
+//       height: s.getBoundingClientRect().height,
+//     }));
+//   });
+//   console.log("All spans:", JSON.stringify(debug, null, 2));
+
+//   const coords = await page.evaluate(() => {
+//     // Try 1: find button that contains "Add Note" text anywhere
+//     const buttons = Array.from(document.querySelectorAll("button"));
+//     for (const btn of buttons) {
+//       const text = (btn.textContent || "").replace(/\s+/g, " ").trim();
+//       if (text.includes("Add Note")) {
+//         (btn as HTMLElement).scrollIntoView({ block: "center", inline: "center" });
+//         const rect = btn.getBoundingClientRect();
+//         console.log("Found button:", text, rect);
+//         if (rect.width > 0 && rect.height > 0) {
+//           return {
+//             x: Math.round(rect.left + rect.width / 2),
+//             y: Math.round(rect.top + rect.height / 2),
+//             found: true,
+//             method: "button text match"
+//           };
+//         }
+//       }
+//     }
+//     return { x: 0, y: 0, found: false, method: "none" };
+//   });
+
+//   console.log("clickAddNote coords:", JSON.stringify(coords));
+
+//   if (!coords.found) throw new Error("Add Note button not found");
+
+//   await page.waitForTimeout(500);
+
+//   await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseMoved", x: coords.x, y: coords.y, button: "none" });
+//   await page.sendCDP("Input.dispatchMouseEvent", { type: "mousePressed", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
+//   await page.waitForTimeout(80);
+//   await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseReleased", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
+// }
+
 async function clickAddNote(page: any): Promise<void> {
-  // First: debug what spans exist
-  const debug = await page.evaluate(() => {
-    return Array.from(document.querySelectorAll("span")).map(s => ({
-      text: (s.textContent || "").trim(),
-      className: s.className,
-      width: s.getBoundingClientRect().width,
-      height: s.getBoundingClientRect().height,
-    }));
-  });
-  console.log("All spans:", JSON.stringify(debug, null, 2));
-
-  const coords = await page.evaluate(() => {
-    // Try 1: find button that contains "Add Note" text anywhere
-    const buttons = Array.from(document.querySelectorAll("button"));
-    for (const btn of buttons) {
-      const text = (btn.textContent || "").replace(/\s+/g, " ").trim();
-      if (text.includes("Add Note")) {
-        (btn as HTMLElement).scrollIntoView({ block: "center", inline: "center" });
-        const rect = btn.getBoundingClientRect();
-        console.log("Found button:", text, rect);
-        if (rect.width > 0 && rect.height > 0) {
-          return {
-            x: Math.round(rect.left + rect.width / 2),
-            y: Math.round(rect.top + rect.height / 2),
-            found: true,
-            method: "button text match"
-          };
-        }
-      }
-    }
-    return { x: 0, y: 0, found: false, method: "none" };
-  });
-
-  console.log("clickAddNote coords:", JSON.stringify(coords));
-
-  if (!coords.found) throw new Error("Add Note button not found");
-
-  await page.waitForTimeout(500);
-
-  await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseMoved", x: coords.x, y: coords.y, button: "none" });
-  await page.sendCDP("Input.dispatchMouseEvent", { type: "mousePressed", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
-  await page.waitForTimeout(80);
-  await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseReleased", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
+  await page.locator("button:has-text('Add Note')").first().click();
 }
 
 async function runSeraTask(data: {
