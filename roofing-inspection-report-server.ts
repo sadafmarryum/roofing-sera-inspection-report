@@ -164,12 +164,6 @@ async function runSeraTask(data: {
     // =========================
     // STEP 6 - FILL NOTE
     // =========================
-    // await page.evaluate((note) => {
-    //   const textarea = document.querySelector("textarea") as HTMLTextAreaElement;
-    //   if (textarea) textarea.value = note;
-    // }, data.formattedReport);
-
-    // await page.waitForTimeout(1000);
     await page.locator("textarea[data-cy='comment-form-body-textarea']").first().click();
     await page.waitForTimeout(300);
     await page.locator("textarea[data-cy='comment-form-body-textarea']").first().fill(data.formattedReport);
@@ -178,13 +172,15 @@ async function runSeraTask(data: {
     // =========================
     // STEP 7 - SAVE
     // =========================
-    await page.evaluate(() => {
-      const save = Array.from(document.querySelectorAll("button"))
-        .find(e => e.textContent?.includes("Save")) as HTMLElement;
+    // await page.evaluate(() => {
+    //   const save = Array.from(document.querySelectorAll("button"))
+    //     .find(e => e.textContent?.includes("Save")) as HTMLElement;
 
-      save?.click();
-    });
+    //   save?.click();
+    // });
 
+    // await page.waitForTimeout(5000);
+    await page.locator("button.sera-button.jumbo.primary").first().click();
     await page.waitForTimeout(5000);
 
     await stagehand.close();
