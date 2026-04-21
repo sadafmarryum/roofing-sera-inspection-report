@@ -180,7 +180,7 @@ async function runSeraTask(data: {
       success: true,
       message: `Inspection Report is added in Roofing Sera account for
       Customer Name: ${data.customerName}
-      JobNimbus Url: ${data.jobNimbusUrl || "N/A"}`
+      JobNimbus Url: ${data.jobNimbusUrl || "N/A"}`,
       sessionUrl,
     };
 
