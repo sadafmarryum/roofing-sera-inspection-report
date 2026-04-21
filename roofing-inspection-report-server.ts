@@ -124,7 +124,7 @@ async function runSeraTask(data: {
     if (!customerExists) {
       return {
         success: false,
-        message: `No customer found in Sera for ${data.customerName}`,
+        message: `No record found with this customer name: ${data.customerName}`,
         customerName: data.customerName,
         sessionUrl,
       };
@@ -144,7 +144,14 @@ async function runSeraTask(data: {
       return false;
     }, data.customerName);
 
-    if (!clickedCustomer) throw new Error("Customer click failed");
+    // if (!clickedCustomer) throw new Error("Customer click failed");
+    if (!clickedCustomer) {
+    return {
+    success: false,
+    message: `No record found with this customer name: ${data.customerName}`,
+    customerName: data.customerName,
+    sessionUrl,
+   };
 
     await page.waitForTimeout(5000);
 
