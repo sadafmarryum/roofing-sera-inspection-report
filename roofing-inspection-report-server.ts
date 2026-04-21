@@ -33,7 +33,6 @@ async function runSeraTask(data: {
   customerName: string;
   formattedReport: string;
   jobNimbusUrl?: string;
-  companyCamUrl?: string;
 }) {
   const stagehand = new Stagehand({
     env: "BROWSERBASE",
@@ -172,14 +171,6 @@ async function runSeraTask(data: {
     // =========================
     // STEP 7 - SAVE
     // =========================
-    // await page.evaluate(() => {
-    //   const save = Array.from(document.querySelectorAll("button"))
-    //     .find(e => e.textContent?.includes("Save")) as HTMLElement;
-
-    //   save?.click();
-    // });
-
-    // await page.waitForTimeout(5000);
     await page.locator("button.sera-button.jumbo.primary").first().click();
     await page.waitForTimeout(5000);
 
@@ -187,10 +178,10 @@ async function runSeraTask(data: {
 
     return {
       success: true,
-      message: "Inspection report added successfully",
-      customerName: data.customerName,
-      jobNimbusUrl: data.jobNimbusUrl || null,
-      companyCamUrl: data.companyCamUrl || null,
+      // message: "Inspection report added successfully",
+      message: `Inspection Report is added in Roofing Sera account for ${data.customerName}${data.jobNimbusUrl ? ` and ${data.jobNimbusUrl}` : ""}`,
+      // customerName: data.customerName,
+      // jobNimbusUrl: data.jobNimbusUrl || null,
       sessionUrl,
     };
 
