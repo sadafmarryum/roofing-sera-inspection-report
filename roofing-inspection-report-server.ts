@@ -75,9 +75,12 @@ app.use(express.json());
 //   await page.sendCDP("Input.dispatchMouseEvent", { type: "mouseReleased", x: coords.x, y: coords.y, button: "left", clickCount: 1 });
 // }
 
-async function clickAddNote(page: any): Promise<void> {
-  await page.locator("button", { hasText: "Add Note" }).first().click();
-}
+// async function clickAddNote(page: any): Promise<void> {
+//   await page.locator("button", { hasText: "Add Note" }).first().click();
+// }
+
+ // await page.locator("i.tag-menu-btn").first().click();
+ //        await page.waitForTimeout(1000);
 
 async function runSeraTask(data: {
   customerName: string;
@@ -208,7 +211,8 @@ async function runSeraTask(data: {
     // =========================
     // STEP 5 - ADD NOTE
    // =========================
-    await clickAddNote(page);
+    // await clickAddNote(page);
+    await page.locator("i.fa-plus").first().click();
     await page.waitForTimeout(3000);
 
     // =========================
