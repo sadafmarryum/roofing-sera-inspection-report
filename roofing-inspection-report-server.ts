@@ -152,6 +152,7 @@ async function runSeraTask(data: {
     customerName: data.customerName,
     sessionUrl,
    };
+  }   
 
     await page.waitForTimeout(5000);
 
